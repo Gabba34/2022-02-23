@@ -111,7 +111,88 @@ public class YelpDao {
 		}
 	}
 	
+	public List<String> getCities(){
+		String sql = "SELECT DISTINCT City "
+				+ "FROM business "
+				+ "ORDER BY City";
+		List<String> città = new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement statement = conn.prepareStatement(sql);
+			ResultSet set = statement.executeQuery();
+			while(set.next()) {
+				città.add(new String(set.getString("City")));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;		
+		}
+		return città;
+	}
 	
+	public List<Business> getBusinesses(String city){
+		List<Business> businesses = new ArrayList<>();
+		String sql = "SELECT * "
+				+ "FROM business "
+				+ "WHERE City = ? "
+				+ "ORDER BY business_name ";
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setString(1, city);
+			ResultSet set = statement.executeQuery();
+			while (set.next()) {
+				Business business = new Business(set.getString("business_id"), 
+						set.getString("full_address"),
+						set.getString("active"),
+						set.getString("categories"),
+						set.getString("city"),
+						set.getInt("review_count"),
+						set.getString("business_name"),
+						set.getString("neighborhoods"),
+						set.getDouble("latitude"),
+						set.getDouble("longitude"),
+						set.getString("state"),
+						set.getDouble("stars"));
+				businesses.add(business);
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;	
+		}
+		return businesses;
+	}
 	
+	public List<Review> getReviews(Business b){
+		List<Review> reviews = new ArrayList<>();
+		String sql = "SELECT * "
+				+ "FROM reviews "
+				+ "WHERE business_id = ? ";
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setString(1, b.getBusinessId());
+			ResultSet set = statement.executeQuery();
+			while(set.next()) {
+				Review review = new Review(set.getString("review_id"), 
+						set.getString("business_id"),
+						set.getString("user_id"),
+						set.getDouble("stars"),
+						set.getDate("review_date").toLocalDate(),
+						set.getInt("votes_funny"),
+						set.getInt("votes_useful"),
+						set.getInt("votes_cool"),
+						set.getString("review_text"));
+				reviews.add(review);
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return reviews;
+	}
 	
 }
