@@ -3,9 +3,11 @@ package it.polito.tdp.yelp.model;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
@@ -21,6 +23,7 @@ public class Model {
 	List<Consecutivo> cons;
 	List<Review> uscenti;
 	int d;
+	List<Review> miglioramenti;
 	
 	public Model() {
 		dao = new YelpDao();
@@ -47,8 +50,11 @@ public class Model {
 		for(Consecutivo c : getConsecutivi()) {
 			Graphs.addEdge(this.grafo, c.getPartenza(), c.getArrivo(), c.getPeso());
 		}
+		for (Review r : reviews) {
+			trovaMiglioramento(r);
+		}
 		return "Grafo creato con\nvertici: "+this.grafo.vertexSet().size()+"\narchi: "+this.grafo.edgeSet().size()
-			  +"\n"+getUscenti().toString()+" Archi uscenti: "+d;
+			  +"\n"+getUscenti().toString()+" Archi uscenti: "+d+"\n"+miglioramenti;
 	}
 
 	public List<Consecutivo> getConsecutivi(){
@@ -85,4 +91,34 @@ public class Model {
 		}
 		return uscenti;
 	}
+	
+	// ricorsione
+		public List<Review> trovaMiglioramento(Review r){
+			miglioramenti = new ArrayList<>();
+			Set<Review> componenteConnessa;
+			ConnectivityInspector<Review, DefaultWeightedEdge> ci = new ConnectivityInspector<>(this.grafo);
+			componenteConnessa = ci.connectedSetOf(r);
+			List<Review> reviewValide = new ArrayList<>();
+			reviewValide.add(r);
+			componenteConnessa.remove(r);
+			reviewValide.addAll(componenteConnessa);
+			List<Review> parziale = new ArrayList<>();
+			parziale.add(r);
+			cerca(parziale,reviewValide, 1);
+			return miglioramenti;
+		}
+
+		private void cerca(List<Review> parziale, List<Review> reviewValide, int livello) {
+			if(parziale.size()>miglioramenti.size()) {
+				miglioramenti = new ArrayList<>(parziale);
+			}
+			if(livello==reviewValide.size()) {
+				return;
+			}
+			parziale.add(reviewValide.get(livello));
+			cerca(parziale, reviewValide, livello+1);
+			parziale.remove(reviewValide.get(livello));
+			cerca(parziale, reviewValide, livello+1);
+		}
+
 }
